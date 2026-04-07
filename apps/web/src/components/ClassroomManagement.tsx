@@ -6,8 +6,9 @@ import { useClassrooms } from '../hooks/useClassrooms';
 import { toast } from 'sonner';
 
 export const ClassroomManagement: React.FC = () => {
-  const { data: classrooms, isLoading, createClassroom, deleteClassroom } = useClassrooms();
+  const { data: classrooms, isLoading, createClassroom, updateClassroom, deleteClassroom } = useClassrooms();
   const [showModal, setShowModal] = useState(false);
+  const [editingClassroom, setEditingClassroom] = useState<any>(null);
   const [name, setName] = useState('');
 
   const columns = [
@@ -49,7 +50,11 @@ export const ClassroomManagement: React.FC = () => {
       accessor: (item: any) => (
         <div className="flex items-center gap-3">
           <button 
-             onClick={() => toast.info('Sector reconfiguration pending')}
+             onClick={() => {
+               setEditingClassroom(item);
+               setName(item.name);
+               setShowModal(true);
+             }}
              className="p-1.5 hover:bg-white/5 text-gray-500 hover:text-white transition-all"
           >
             <Edit className="w-4 h-4" />
@@ -73,11 +78,21 @@ export const ClassroomManagement: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await createClassroom({ name });
-      setShowModal(false);
-      setName('');
-      toast.success(`Sector ${name} initialized`);
+      if (editingClassroom) {
+        await updateClassroom({ id: editingClassroom.id, data: { name } });
+        toast.success(`Sector ${name} reconfigured`);
+      } else {
+        await createClassroom({ name });
+        toast.success(`Sector ${name} initialized`);
+      }
+      handleCloseModal();
     } catch (err) {}
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setEditingClassroom(null);
+    setName('');
   };
 
   return (
@@ -89,7 +104,11 @@ export const ClassroomManagement: React.FC = () => {
           <p className="text-[11px] text-white/20 uppercase tracking-[0.2em] font-bold">Manage Classroom Sectors & Surveillance Mapping</p>
         </div>
         <button 
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            setEditingClassroom(null);
+            setName('');
+            setShowModal(true);
+          }}
           className="px-4 py-2 bg-neon-blue text-black text-[11px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-neon-blue/80 transition-all shadow-[0_0_15px_rgba(0,243,255,0.3)]"
         >
           <Plus className="w-4 h-4" />
@@ -100,7 +119,7 @@ export const ClassroomManagement: React.FC = () => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 text-left">
-          <GlowCard glowColor="blue" title="Tactical Sector Initialization" className="w-full max-w-sm">
+          <GlowCard glowColor="blue" title={editingClassroom ? "Tactical Sector Reconfiguration" : "Tactical Sector Initialization"} className="w-full max-w-sm">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1">
                 <label className="text-[10px] uppercase font-bold text-white/40">Sector Designation (Name)</label>
@@ -116,7 +135,7 @@ export const ClassroomManagement: React.FC = () => {
               <div className="flex gap-4 pt-4">
                 <button 
                   type="button"
-                  onClick={() => setShowModal(false)}
+                  onClick={handleCloseModal}
                   className="flex-1 px-4 py-2 border border-white/10 text-white/60 text-[10px] font-bold uppercase hover:bg-white/5"
                 >
                   Abord
@@ -125,7 +144,7 @@ export const ClassroomManagement: React.FC = () => {
                   type="submit"
                   className="flex-1 px-4 py-2 bg-neon-blue text-black text-[10px] font-bold uppercase hover:bg-neon-blue/80"
                 >
-                  Initialize
+                  {editingClassroom ? "Update" : "Initialize"}
                 </button>
               </div>
             </form>

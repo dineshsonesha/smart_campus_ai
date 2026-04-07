@@ -35,6 +35,11 @@ export const useClassrooms = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['classrooms'] }),
   });
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Classroom> }) => api.put<Classroom>(`/classrooms/${id}`, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['classrooms'] }),
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/classrooms/${id}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['classrooms'] }),
@@ -43,6 +48,7 @@ export const useClassrooms = () => {
   return {
     ...query,
     createClassroom: createMutation.mutateAsync,
+    updateClassroom: updateMutation.mutateAsync,
     deleteClassroom: deleteMutation.mutateAsync,
   };
 };
