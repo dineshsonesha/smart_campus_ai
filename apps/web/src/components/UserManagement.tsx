@@ -3,18 +3,31 @@ import { GlowCard } from './GlowCard';
 import { TacticalTable } from './TacticalTable';
 import { Plus, User as UserIcon, Mail, Shield, Phone, Edit, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useUsers, UserRole } from '../hooks/useUsers';
+import { useUsers, UserRole, type User } from '../hooks/useUsers';
 import { toast } from 'sonner';
 
 export const UserManagement: React.FC = () => {
   const { data: users, isLoading, createUser, updateUser, deleteUser } = useUsers();
   const [showModal, setShowModal] = useState(false);
-  const [editingUser, setEditingUser] = useState<any>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+
+  // Helper to format hour (0-23) to "HH:mm"
+  const formatHourToTimeStr = (hour: number | string | undefined | null): string => {
+    if (hour === undefined || hour === null || hour === '') return '08:00';
+    const h = parseInt(hour.toString(), 10);
+    return `${h.toString().padStart(2, '0')}:00`;
+  };
+
+  // Helper to parse "HH:mm" to hour (0-23)
+  const parseTimeStrToHour = (timeStr: string): number => {
+    return parseInt(timeStr.split(':')[0], 10) || 0;
+  };
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    role: UserRole.TEACHER,
+    role: UserRole.TEACHER as UserRole,
     shiftStart: '08:00',
     shiftEnd: '16:00'
   });
@@ -80,8 +93,8 @@ export const UserManagement: React.FC = () => {
                 email: item.email, 
                 phone: item.phone || '', 
                 role: item.role,
-                shiftStart: item.shiftStart || '08:00',
-                shiftEnd: item.shiftEnd || '16:00'
+                shiftStart: formatHourToTimeStr(item.shiftStart),
+                shiftEnd: formatHourToTimeStr(item.shiftEnd)
               });
               setShowModal(true);
             }}
@@ -108,10 +121,19 @@ export const UserManagement: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const payload: Partial<User> = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        role: formData.role,
+        shiftStart: parseTimeStrToHour(formData.shiftStart),
+        shiftEnd: parseTimeStrToHour(formData.shiftEnd)
+      };
+
       if (editingUser) {
-        await updateUser({ id: editingUser.id, data: formData });
+        await updateUser({ id: editingUser.id, data: payload });
       } else {
-        await createUser(formData);
+        await createUser(payload);
       }
       setShowModal(false);
       setEditingUser(null);

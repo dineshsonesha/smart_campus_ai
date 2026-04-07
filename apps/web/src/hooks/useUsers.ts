@@ -19,8 +19,8 @@ export type User = {
   email: string;
   phone?: string;
   role: UserRole;
-  shiftStart?: string;
-  shiftEnd?: string;
+  shiftStart?: number;
+  shiftEnd?: number;
   createdAt: string;
   updatedAt: string;
 };

@@ -20,11 +20,25 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
 };
 
 export const updateUser = async (req: Request, res: Response, next: NextFunction) => {
-  const user = await prisma.user.update({
-    where: { id: req.params.id },
-    data: req.body,
-  });
-  res.json(user);
+  try {
+    const { name, email, phone, role, shiftStart, shiftEnd } = req.body;
+    
+    const updateData: any = {};
+    if (name !== undefined) updateData.name = name;
+    if (email !== undefined) updateData.email = email;
+    if (phone !== undefined) updateData.phone = phone;
+    if (role !== undefined) updateData.role = role;
+    if (shiftStart !== undefined) updateData.shiftStart = Number(shiftStart);
+    if (shiftEnd !== undefined) updateData.shiftEnd = Number(shiftEnd);
+
+    const user = await prisma.user.update({
+      where: { id: req.params.id },
+      data: updateData,
+    });
+    res.json(user);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 export const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
