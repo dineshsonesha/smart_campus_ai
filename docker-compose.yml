@@ -1,0 +1,97 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: smart-eye-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: smartcampus
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d smartcampus"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: smart-eye-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: smart-eye-api:latest
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: smart-eye-api
+    ports:
+      - "3001:3001"
+    env_file:
+      - apps/api/.env
+    environment:
+      DATABASE_URL: "postgresql://admin:password123@postgres:5432/smartcampus?sslmode=disable"
+      REDIS_URL: "redis://redis:6379"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    image: smart-eye-worker:latest
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    container_name: smart-eye-worker
+    env_file:
+      - apps/worker/.env
+    environment:
+      DATABASE_URL: "postgresql://admin:password123@postgres:5432/smartcampus?sslmode=disable"
+      REDIS_URL: "redis://redis:6379"
+      API_URL: "http://api:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    image: smart-eye-web:latest
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: smart-eye-web
+    ports:
+      - "3000:3000"
+    env_file:
+      - apps/web/.env
+    environment:
+      VITE_API_URL: "http://localhost:3001"
+    depends_on:
+      - api
+
+  ai-engine:
+    image: smart-eye-ai-engine:latest
+    build:
+      context: ./apps/ai-engine
+      dockerfile: Dockerfile
+    container_name: smart-eye-ai-engine
+    ports:
+      - "8000:8000"
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
+  redis_data:

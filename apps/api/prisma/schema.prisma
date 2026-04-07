@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Classroom {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  type      RoomType @default(CLASSROOM)
+  devices   Device[]
+  schedules Schedule[]
+  Alert     Alert[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Device {
+  id             String         @id @default(uuid())
+  name           String
+  category       DeviceCategory @default(CAMERA)
+  status         DeviceStatus   @default(OFFLINE)
+  streamUrl      String?
+  ipAddress      String?
+  classroomId    String
+  assignedUserId String?
+  locationDesc   String?        @default("Not specified")
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  classroom      Classroom      @relation(fields: [classroomId], references: [id])
+  assignedUser   User?          @relation(fields: [assignedUserId], references: [id])
+  Alert          Alert[]
+}
+
+model User {
+  id         String     @id @default(uuid())
+  name       String
+  email      String     @unique
+  role       UserRole   @default(TEACHER)
+  phone      String?
+  shiftStart Int        @default(9)  // Hour (0-23)
+  shiftEnd   Int        @default(17) // Hour (0-23)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  schedules  Schedule[]
+  devices    Device[]
+  Alert      Alert[]
+}
+
+model Schedule {
+  id          String    @id @default(uuid())
+  classroomId String
+  teacherId   String
+  dayOfWeek   DayOfWeek
+  startTime   String    @default("09:00")
+  endTime     String    @default("10:00")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  classroom   Classroom @relation(fields: [classroomId], references: [id])
+  teacher     User      @relation(fields: [teacherId], references: [id])
+
+  @@unique([classroomId, dayOfWeek, startTime])
+}
+
+model Alert {
+  id           String        @id @default(uuid())
+  type         AlertType
+  severity     AlertSeverity @default(MEDIUM)
+  status       AlertStatus   @default(PENDING)
+  title        String
+  description  String?
+  metadata     Json?
+  imageUrl     String?
+  deviceId     String
+  classroomId  String
+  targetUserId String?       @default("ADMIN")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  device       Device        @relation(fields: [deviceId], references: [id])
+  classroom    Classroom     @relation(fields: [classroomId], references: [id])
+  targetUser   User?         @relation(fields: [targetUserId], references: [id])
+}
+
+enum RoomType {
+  CLASSROOM
+  LAB
+  OFFICE
+  PARKING
+  ENTRANCE
+  CANTEEN
+}
+
+enum DeviceCategory {
+  CAMERA
+  STATIONARY
+  THERMAL
+  LIDAR
+  ACOUSTIC
+}
+
+enum DeviceStatus {
+  ONLINE
+  OFFLINE
+  OFF
+}
+
+enum UserRole {
+  ADMIN
+  TEACHER
+  STAFF
+  GUARD
+  PEON
+  WORKER
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum AlertType {
+  CROWD_DENSITY
+  UNAUTHORIZED_ACCESS
+  EQUIPMENT_MISUSE
+  FIRE_HAZARD
+  LOITERING
+  VOCAL_DISTURBANCE
+  PERSONNEL_ABSENT
+}
+
+enum AlertSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AlertStatus {
+  PENDING
+  ACKNOWLEDGED
+  RESOLVED
+  DISMISSED
+}

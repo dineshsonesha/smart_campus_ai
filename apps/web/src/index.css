@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+@theme {
+  /* Hacker / Cyberpunk Color Palette */
+  --color-neon-green: #39ff14;
+  --color-neon-blue: #00f3ff;
+  --color-neon-red: #ff003c;
+  --color-neon-amber: #ffaa00;
+  --color-bg-primary: #0a0a0c;
+  --color-bg-secondary: #121216;
+  --color-bg-card: rgba(20, 20, 25, 0.8);
+  --color-bg-glass: rgba(10, 10, 12, 0.95);
+  
+  --font-orbitron: "Orbitron", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --animate-pulse-glow: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-scanline: scanline 8s linear infinite;
+
+  @keyframes pulse-glow {
+    0%, 100% {
+      opacity: 1;
+      filter: drop-shadow(0 0 5px var(--color-neon-green));
+    }
+    50% {
+      opacity: 0.8;
+      filter: drop-shadow(0 0 15px var(--color-neon-green));
+    }
+  }
+
+  @keyframes scanline {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-bg-primary text-gray-300 font-mono overflow-hidden selection:bg-neon-green selection:text-black;
+  }
+}
+
+@layer components {
+  /* CRT Scanline Effect */
+  .scanline-overlay {
+    @apply pointer-events-none fixed inset-0 z-50 overflow-hidden;
+    background: linear-gradient(
+      rgba(18, 16, 16, 0) 50%,
+      rgba(0, 0, 0, 0.25) 50%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255, 0, 0, 0.06),
+      rgba(0, 255, 0, 0.02),
+      rgba(0, 0, 255, 0.06)
+    );
+    background-size: 100% 4px, 3px 100%;
+  }
+
+  /* Vector Grid Background */
+  .grid-background {
+    @apply fixed inset-0 -z-10 opacity-10;
+    background-image: 
+      linear-gradient(rgba(57, 255, 20, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(57, 255, 20, 0.1) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(circle, black, transparent 80%);
+  }
+
+  /* Glow Card Base */
+  .glow-card {
+    @apply bg-bg-card border border-white/5 backdrop-blur-md rounded-sm transition-all duration-300;
+    box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.5);
+  }
+
+  .glow-card:hover {
+    @apply border-white/10;
+  }
+
+  .glow-border-green { @apply border-neon-green/30 shadow-[0_0_15px_-5px_rgba(57,255,20,0.3)]; }
+  .glow-border-blue { @apply border-neon-blue/30 shadow-[0_0_15px_-5px_rgba(0,243,255,0.3)]; }
+  .glow-border-red { @apply border-neon-red/30 shadow-[0_0_15px_-5px_rgba(255,0,60,0.3)]; }
+}
